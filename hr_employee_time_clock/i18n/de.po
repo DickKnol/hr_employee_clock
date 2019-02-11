@@ -53,12 +53,12 @@ msgid "Employee Tag"
 msgstr "Mitarbeiter Tag"
 
 #. module: hr_employee_time_clock
-#: field:hr.timesheet.current.open,date_from:0
+#: field:hr.timesheet.current.open,date_start:0
 msgid "Start Date"
 msgstr "Startdatum"
 
 #. module: hr_employee_time_clock
-#: field:hr.timesheet.current.open,date_to:0
+#: field:hr.timesheet.current.open,date_end:0
 msgid "End Date"
 msgstr "Enddatum"
 

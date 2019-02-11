@@ -18,10 +18,10 @@
                     <group>
                         <field name="category_id"/>
                         <group colspan="2">
-                            <field name="date_from"
-                                   on_change="change_date(date_from, date_to)"/>
-                            <field name="date_to"
-                                   on_change="change_date(date_from, date_to)"/>
+                            <field name="date_start"
+                                   on_change="change_date(date_start, date_end)"/>
+                            <field name="date_end"
+                                   on_change="change_date(date_start, date_end)"/>
                         </group>
                     </group>
                     <footer>

@@ -35,20 +35,20 @@ class CreateTimesheetWithTag(models.TransientModel):
                                   string="Employee Tag",
                                   required=True,
                                   help='Category of Employee')
-    date_from = fields.Date(string='Start Date')
-    date_to = fields.Date(string='End Date')
+    date_start = fields.Date(string='Start Date')
+    date_end = fields.Date(string='End Date')
 
-    @api.onchange('date_from', 'date_to')
+    @api.onchange('date_start', 'date_end')
     @api.multi
     def change_date(self):
-        if self.date_to and self.date_from and self.date_from > self.date_to:
+        if self.date_end and self.date_start and self.date_start > self.date_end:
             raise ValidationError(
                 _('You added wrong date period.'))
 
     @api.model
     def create(self, values):
-        if values.get('date_to') and values.get('date_from') \
-                and values.get('date_from') > values.get('date_to'):
+        if values.get('date_end') and values.get('date_start') \
+                and values.get('date_start') > values.get('date_end'):
             raise ValidationError(
                 _('You added wrong date period.'))
         return super(CreateTimesheetWithTag, self).create(values)
@@ -66,8 +66,8 @@ class CreateTimesheetWithTag(models.TransientModel):
             ('category_ids', 'in', [category_id])])
         user_ids = []
         ts_ids = []
-        date_from = self.date_from or time.strftime('%Y-%m-%d')
-        date_to = self.date_to or time.strftime('%Y-%m-%d')
+        date_start = self.date_start or time.strftime('%Y-%m-%d')
+        date_end = self.date_end or time.strftime('%Y-%m-%d')
         # Second: Create/Open Timesheets for all fetched employees.
         for emp in employee_objects:
 
@@ -76,8 +76,8 @@ class CreateTimesheetWithTag(models.TransientModel):
                 ts_id = ts.search([
                     ('user_id', '=', emp.user_id.id),
                     ('state', 'in', ('draft', 'new')),
-                    ('date_from', '<=', date_from),
-                    ('date_to', '>=', date_to)
+                    ('date_start', '<=', date_start),
+                    ('date_end', '>=', date_end)
                 ])
                 # if ts_id:
                 #     raise ValidationError(
@@ -85,11 +85,12 @@ class CreateTimesheetWithTag(models.TransientModel):
                 #             name=emp.name)))
                 if not ts_id:
                     values = {'employee_id': emp.id}
-                    if self.date_from and self.date_to:
+                    if self.date_start and self.date_end:
                         values.update({
-                            'date_from': date_from,
-                            'date_to': date_to})
+                            'date_start': date_start,
+                            'date_end': date_end})
                     ts_id = ts.create(values)
+
                 ts_ids.append(ts_id.id)
 
         # Third: Add it to dictionary to be returned

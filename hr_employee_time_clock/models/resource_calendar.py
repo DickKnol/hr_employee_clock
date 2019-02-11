@@ -163,10 +163,10 @@ class ResourceCalendar(models.Model):
                 if not att.date_from or not att.date_to:
                     res.append(att)
                 else:
-                    date_from = datetime.strptime(att.date_from, '%Y-%m-%d')
-                    date_to = datetime.strptime(att.date_to, '%Y-%m-%d')
+                    date_start = datetime.strptime(att.date_from, '%Y-%m-%d')
+                    date_end = datetime.strptime(att.date_to, '%Y-%m-%d')
 
-                    if date_from <= start_dt <= date_to:
+                    if date_start <= start_dt <= date_end:
                         res.append(att)
         return res
 
@@ -229,14 +229,14 @@ class ResourceCalendar(models.Model):
                 else:
                     leave.tz = 'UTC'
             if start_datetime:
-                leave_date_to = to_tz(
+                leave_date_end = to_tz(
                     fields.Datetime.from_string(leave.date_to), leave.tz)
-                if not leave_date_to >= start_datetime:
+                if not leave_date_end >= start_datetime:
                     continue
             if end_datetime:
-                leave_date_from = to_tz(
+                leave_date_start = to_tz(
                     fields.Datetime.from_string(leave.date_from), leave.tz)
-                if not leave_date_from <= end_datetime:
+                if not leave_date_start <= end_datetime:
                     continue
             filtered_leaves += leave
 

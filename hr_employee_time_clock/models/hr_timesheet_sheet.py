@@ -42,7 +42,7 @@ class HrTimesheetSheet(models.Model):
     _order = "id desc"
     _description = "Timesheet"
 
-    def _default_date_from(self):
+    def _default_date_start(self):
         user = self.env['res.users'].browse(self.env.uid)
         r = user.company_id and user.company_id.timesheet_range or 'month'
         if r == 'month':
@@ -54,7 +54,7 @@ class HrTimesheetSheet(models.Model):
             return time.strftime('%Y-01-01')
         return fields.Date.context_today(self)
 
-    def _default_date_to(self):
+    def _default_date_end(self):
         user = self.env['res.users'].browse(self.env.uid)
         r = user.company_id and user.company_id.timesheet_range or 'month'
         if r == 'month':
@@ -117,19 +117,19 @@ class HrTimesheetSheet(models.Model):
         for sheet in self:
             sheet.attendance_count = len(sheet.attendances_ids)
 
-    @api.onchange('date_from', 'date_to')
+    @api.onchange('date_start', 'date_end')
     @api.multi
-    def change_date_from(self):
-        date_from = self.date_from
-        date_to = self.date_to
-        if date_from and not date_to:
-            date_to_with_delta = \
-                fields.Date.from_string(date_from) + timedelta(hours=164)
-            self.date_to = date_to_with_delta
-        elif date_from and date_to and date_from > date_to:
-            date_to_with_delta = \
-                fields.Date.from_string(date_from) + timedelta(hours=164)
-            self.date_to = str(date_to_with_delta)
+    def change_date_start(self):
+        date_start = self.date_start
+        date_end = self.date_end
+        if date_start and not date_end:
+            date_end_with_delta = \
+                fields.Date.from_string(date_start) + timedelta(hours=164)
+            self.date_end = date_end_with_delta
+        elif date_start and date_end and date_start > date_end:
+            date_end_with_delta = \
+                fields.Date.from_string(date_start) + timedelta(hours=164)
+            self.date_end = str(date_end_with_delta)
 
     name = fields.Char(string="Note",
                        states={'confirm': [('readonly', True)],
@@ -146,14 +146,14 @@ class HrTimesheetSheet(models.Model):
                               store=True,
                               readonly=True,
                               states={'new': [('readonly', False)]})
-    date_from = fields.Date(string='Date From',
-                            default=_default_date_from,
+    date_start = fields.Date(string='Date From',
+                            default=_default_date_start,
                             required=True,
                             index=True,
                             readonly=True,
                             states={'new': [('readonly', False)]})
-    date_to = fields.Date(string='Date To',
-                          default=_default_date_to,
+    date_end = fields.Date(string='Date To',
+                          default=_default_date_end,
                           required=True,
                           index=True,
                           readonly=True,
@@ -243,18 +243,18 @@ class HrTimesheetSheet(models.Model):
             else:
                 values['department_id'] = self.env['hr.employee'].browse(
                     values['employee_id']).department_id.id
-        if values.get('date_to') and values.get('date_from') \
-                and values.get('date_from') > values.get('date_to'):
+        if values.get('date_end') and values.get('date_start') \
+                and values.get('date_start') > values.get('date_end'):
             raise ValidationError(
                 _('You added wrong date period.'))
         hr_timesheet_sheet = super(HrTimesheetSheet, self).create(values)
         self.env['employee.attendance.analytic'].create_line(
-            hr_timesheet_sheet, hr_timesheet_sheet.date_from,
-            hr_timesheet_sheet.date_to)
+            hr_timesheet_sheet, hr_timesheet_sheet.date_start,
+            hr_timesheet_sheet.date_end)
         hr_timesheet_sheet.write({'state': 'draft'})
         return hr_timesheet_sheet
 
-    @api.constrains('date_to', 'date_from', 'employee_id')
+    @api.constrains('date_end', 'date_start', 'employee_id')
     def _check_sheet_date(self, forced_user_id=False):
         for sheet in self:
             new_user_id = forced_user_id or sheet.user_id and sheet.user_id.id
@@ -262,11 +262,11 @@ class HrTimesheetSheet(models.Model):
                 self.env.cr.execute('''
                     SELECT id
                     FROM hr_timesheet_sheet_sheet
-                    WHERE (date_from <= %s and %s <= date_to)
+                    WHERE (date_start <= %s and %s <= date_end)
                         AND user_id=%s
                         AND id <> %s''',
-                                    (sheet.date_to,
-                                     sheet.date_from,
+                                    (sheet.date_end,
+                                     sheet.date_start,
                                      new_user_id,
                                      sheet.id))
                 if any(self.env.cr.fetchall()):
@@ -347,8 +347,8 @@ class HrTimesheetSheet(models.Model):
     def name_get(self):
         # week number according to ISO 8601 Calendar
         return [(r['id'], _('Week ') + str(
-            datetime.strptime(r['date_from'], '%Y-%m-%d').isocalendar()[1]))
-                for r in self.read(['date_from'], load='_classic_write')]
+            datetime.strptime(r['date_start'], '%Y-%m-%d').isocalendar()[1]))
+                for r in self.read(['date_start'], load='_classic_write')]
 
     @api.multi
     def unlink(self):
@@ -399,8 +399,8 @@ class HrTimesheetSheet(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'HR Timesheet/Attendance Report',
             'res_model': 'hr.timesheet.attendance.report',
-            'domain': [('date', '>=', self.date_from),
-                       ('date', '<=', self.date_to)],
+            'domain': [('date', '>=', self.date_start),
+                       ('date', '<=', self.date_end)],
             'view_mode': 'pivot',
             'context': {'search_default_user_id': self.user_id.id, }
         }
@@ -570,11 +570,11 @@ class HrTimesheetSheet(models.Model):
     def _overtime_diff(self):
         for sheet in self:
             employee_id = sheet.employee_id.id
-            start_date = sheet.date_from
+            start_date = sheet.date_start
             contract = self.check_contract(employee_id, start_date)
 
             old_timesheet_start_from = parser.parse(
-                sheet.date_from) - timedelta(days=1)
+                sheet.date_start) - timedelta(days=1)
             prev_timesheet_diff = \
                 sheet.get_previous_month_diff(
                     sheet.employee_id.id,
@@ -634,7 +634,7 @@ class HrTimesheetSheet(models.Model):
     def _get_analysis(self):
         for sheet in self:
             contract = self.check_contract(sheet.employee_id.id,
-                                           sheet.date_from)
+                                           sheet.date_start)
             if contract:
                 resource_calendar_id = contract.resource_calendar_id
             else:
@@ -813,8 +813,8 @@ class HrTimesheetSheet(models.Model):
             employee_id).start_time_different
         prev_timesheet_ids = self.search(
             [('employee_id', '=', employee_id)
-             ]).filtered(lambda sheet: sheet.date_to < self.date_from).sorted(
-            key=lambda v: v.date_from)
+             ]).filtered(lambda sheet: sheet.date_end < self.date_start).sorted(
+            key=lambda v: v.date_start)
         if prev_timesheet_ids:
             total_diff = prev_timesheet_ids[-1].calculate_diff_hours
         return total_diff
@@ -870,8 +870,8 @@ class HrTimesheetSheet(models.Model):
                 timesheet_id = self[-1].id
             if sheet.id == timesheet_id:
                 employee_id = sheet.employee_id.id
-                start_date = sheet.date_from
-                end_date = sheet.date_to
+                start_date = sheet.date_start
+                end_date = sheet.date_end
 
                 contract = self.check_contract(employee_id, start_date)
                 if len(contract)>1:

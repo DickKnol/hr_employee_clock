@@ -46,8 +46,8 @@
                   decoration-bf="message_needaction == True"
                   string="Timesheets">
                 <field name="employee_id"/>
-                <field name="date_from"/>
-                <field name="date_to"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
                 <field name="department_id" invisible="1"/>
                 <field name="state"/>
                 <field name="message_needaction" invisible="1"/>
@@ -124,11 +124,11 @@
                     </div>
                     <group>
                         <group>
-                            <label for="date_from" string="Attendance Sheet Period"/>
+                            <label for="date_start" string="Attendance Sheet Period"/>
                             <div>
-                                <field name="date_from" class="oe_inline"/>
+                                <field name="date_start" class="oe_inline"/>
                                 to
-                                <field name="date_to" class="oe_inline"/>
+                                <field name="date_end" class="oe_inline"/>
                             </div>
                             <field name="name" invisible="1"/>
                             <field name="department_id" invisible="1"/>
@@ -159,7 +159,7 @@
                         </page>
                         <page string="Details"
                               class="o_hr_timesheet_sheet_details">
-                            <field context="{'employee_id': employee_id, 'user_id':user_id, 'timesheet_date_from': date_from, 'timesheet_date_to': date_to}"
+                            <field context="{'employee_id': employee_id, 'user_id':user_id, 'timesheet_date_start': date_start, 'timesheet_date_end': date_end}"
                                    name="timesheet_ids" nolabel="1">
                                 <tree editable="bottom"
                                       string="Timesheet Activities">
@@ -226,7 +226,7 @@
         <field name="model">hr_timesheet_sheet.sheet</field>
         <field name="arch" type="xml">
             <search string="Search Timesheet">
-                <field name="date_from"/>
+                <field name="date_start"/>
                 <filter name="new" string="In Draft"
                         domain="[('state','in',('draft', 'new'))]"
                         help="Unvalidated Timesheets"/>

@@ -47,8 +47,8 @@ class AccountAnalyticLine(models.Model):
                                     related='employee_id.department_id',
                                     store=True, readonly=True)
 
-    @api.depends('date', 'user_id',  'sheet_id_computed.date_to',
-                 'sheet_id_computed.date_from', 'sheet_id_computed.employee_id')
+    @api.depends('date', 'user_id',  'sheet_id_computed.date_end',
+                 'sheet_id_computed.date_start', 'sheet_id_computed.employee_id')
     def _compute_sheet(self):
         """Links the timesheet line to the corresponding sheet
         """
@@ -56,8 +56,8 @@ class AccountAnalyticLine(models.Model):
             if not ts_line.project_id:
                 continue
             sheets = self.env['hr_timesheet_sheet.sheet'].search(
-                [('date_to', '>=', ts_line.date),
-                 ('date_from', '<=', ts_line.date),
+                [('date_end', '>=', ts_line.date),
+                 ('date_start', '<=', ts_line.date),
                  ('employee_id.user_id.id', '=', ts_line.user_id.id),
                  ('state', 'in', ['draft', 'new'])])
             if sheets:
@@ -73,11 +73,11 @@ class AccountAnalyticLine(models.Model):
             self._cr.execute("""
                     SELECT l.id
                         FROM account_analytic_line l
-                    WHERE %(date_to)s >= l.date
-                        AND %(date_from)s <= l.date
+                    WHERE %(date_end)s >= l.date
+                        AND %(date_start)s <= l.date
                         AND %(user_id)s = l.user_id
-                    GROUP BY l.id""", {'date_from': ts.date_from,
-                                       'date_to': ts.date_to,
+                    GROUP BY l.id""", {'date_start': ts.date_start,
+                                       'date_end': ts.date_end,
                                        'user_id': ts.employee_id.user_id.id, })
             ids.extend([row[0] for row in self._cr.fetchall()])
         return [('id', 'in', ids)]

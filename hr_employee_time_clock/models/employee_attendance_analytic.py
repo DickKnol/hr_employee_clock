@@ -151,8 +151,8 @@ class EmployeeAttendanceAnalytic(models.Model):
             # t1 = datetime.strptime(time1, "%Y-%m-%d %H:%M:%S")
             duty_hours = new_attendance.sheet_id.calculate_duty_hours(
                 time1,
-                {'date_to': str(new_attendance.sheet_id.date_to),
-                 'date_from': str(new_attendance.sheet_id.date_from), })
+                {'date_to': str(new_attendance.sheet_id.date_end),
+                 'date_from': str(new_attendance.sheet_id.date_start), })
             if not line:
                 line = self.create({'name': name,
                                     'sheet_id': new_attendance.sheet_id.id,

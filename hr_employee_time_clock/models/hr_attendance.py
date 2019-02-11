@@ -146,8 +146,8 @@ class HrAttendance(models.Model):
         att_tz_date_str = self._get_attendance_employee_tz(
             employee_id, date=date)
         sheet_ids = sheet_obj.search(
-            [('date_from', '<=', att_tz_date_str),
-             ('date_to', '>=', att_tz_date_str),
+            [('date_start', '<=', att_tz_date_str),
+             ('date_end', '>=', att_tz_date_str),
              ('employee_id', '=', employee_id)],
             limit=1)
         return sheet_ids and sheet_ids[0] or False
@@ -170,8 +170,8 @@ class HrAttendance(models.Model):
                              WHERE %(date_to)s >= date_trunc('day', a.name AT TIME ZONE 'UTC' AT TIME ZONE coalesce(p.tz, 'UTC'))
                                   AND %(date_from)s <= date_trunc('day', a.name AT TIME ZONE 'UTC' AT TIME ZONE coalesce(p.tz, 'UTC'))
                                   AND %(user_id)s = r.user_id
-                             GROUP BY a.id""", {'date_from': ts.date_from,
-                                                'date_to': ts.date_to,
+                             GROUP BY a.id""", {'date_from': ts.date_start,
+                                                'date_to': ts.date_end,
                                                 'user_id': ts.employee_id.user_id.id, })
             attendance_ids.extend([row[0] for row in self.env.cr.fetchall()])
         return attendance_ids
@@ -208,7 +208,7 @@ class HrAttendance(models.Model):
         sheets = self.env['hr_timesheet_sheet.sheet'].search(
             [('employee_id', '=', employee.id)])
         for sheet in sheets:
-            if str(year) in sheet.date_from or str(year) in sheet.date_to:
+            if str(year) in sheet.date_start or str(year) in sheet.date_end:
                 sheet_ids.append(sheet.id)
         return sheet_ids
 
@@ -511,8 +511,8 @@ class HrAttendance(models.Model):
         check_in = fields.Datetime.from_string(values.get('check_in'))
         sheet_id = self.env['hr_timesheet_sheet.sheet'].search([
             ('employee_id', '=', values.get('employee_id')),
-            ('date_from', '<=', check_in.date()),
-            ('date_to', '>=', check_in.date())], limit=1)
+            ('date_start', '<=', check_in.date()),
+            ('date_end', '>=', check_in.date())], limit=1)
         if sheet_id.state == 'done' and not \
                 self.user_has_groups('hr.group_hr_user'):
             raise AccessError(

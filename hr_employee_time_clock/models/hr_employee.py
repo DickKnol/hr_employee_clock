@@ -217,13 +217,13 @@ class HrEmployee(models.Model):
         hr_timesheet_sheet_sheet_pool = self.env['hr_timesheet_sheet.sheet']
         hr_timesheet_ids = hr_timesheet_sheet_sheet_pool.search(
             [('employee_id', '=', self.id),
-             ('date_from', '<=', date.today()),
-             ('date_to', '>=', date.today())])
+             ('date_start', '<=', date.today()),
+             ('date_end', '>=', date.today())])
         if not self.env.context.get('attendance_manual'):
             hr_timesheet_ids = hr_timesheet_sheet_sheet_pool.sudo().search(
                 [('employee_id', '=', self.id),
-                 ('date_from', '<=', date.today()),
-                 ('date_to', '>=', date.today())])
+                 ('date_start', '<=', date.today()),
+                 ('date_end', '>=', date.today())])
         if not hr_timesheet_ids:
             raise ValidationError(
                 _('Please contact your manager to create timesheet for you.'))
@@ -322,6 +322,7 @@ class HrEmployee(models.Model):
     def check_in_out_action(self, values):
         employee = self.sudo().browse(values.get('employee_id')).exists()
         if not employee:
+            _logger.info('employee not found %s', values)
             return [
                 {'error': _(
                     'Please contact your manager to create '
@@ -330,8 +331,8 @@ class HrEmployee(models.Model):
         hr_timesheet_sheet_sheet_pool = self.env['hr_timesheet_sheet.sheet']
         hr_timesheet_ids = hr_timesheet_sheet_sheet_pool.search(
             [('employee_id', '=', employee.id),
-             ('date_from', '<=', date.today()),
-             ('date_to', '>=', date.today())])
+             ('date_start', '<=', date.today()),
+             ('date_end', '>=', date.today())])
         if not hr_timesheet_ids:
             return [
                 {'error': _(

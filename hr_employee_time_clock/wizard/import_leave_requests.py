@@ -76,11 +76,11 @@ class ImportLeaveRequests(models.TransientModel):
                                      seconds=59))
                     user_tz = employee.user_id and employee.user_id.tz or 'utc'
                     leave_date = self.convert_to_user_timezone(user_tz, dt1)
-                    leave_date_to = self.convert_to_user_timezone(user_tz, dt2)
+                    leave_date_end = self.convert_to_user_timezone(user_tz, dt2)
                     holiday_id = holiday_obj.create({
                         'name': data.leave_type_id.name,
-                        'date_from': leave_date,
-                        'date_to': leave_date_to,
+                        'date_start': leave_date,
+                        'date_end': leave_date_end,
                         'holiday_status_id': data.leave_type_id.id,
                         'employee_id': employee.id,
                         'number_of_days_temp': 1.0,

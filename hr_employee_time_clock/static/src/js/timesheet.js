@@ -23,16 +23,16 @@ var WeeklyTimesheet = form_common.FormWidget.extend(form_common.ReinitializeWidg
         this._super.apply(this, arguments);
         this.set({
             sheets: [],
-            date_from: false,
-            date_to: false,
+            date_start: false,
+            date_end: false,
         });
 
         this.field_manager.on("field_changed:timesheet_ids", this, this.query_sheets);
-        this.field_manager.on("field_changed:date_from", this, function() {
-            this.set({"date_from": time.str_to_date(this.field_manager.get_field_value("date_from"))});
+        this.field_manager.on("field_changed:date_start", this, function() {
+            this.set({"date_start": time.str_to_date(this.field_manager.get_field_value("date_start"))});
         });
-        this.field_manager.on("field_changed:date_to", this, function() {
-            this.set({"date_to": time.str_to_date(this.field_manager.get_field_value("date_to"))});
+        this.field_manager.on("field_changed:date_end", this, function() {
+            this.set({"date_end": time.str_to_date(this.field_manager.get_field_value("date_end"))});
         });
         this.field_manager.on("field_changed:user_id", this, function() {
             this.set({"user_id": this.field_manager.get_field_value("user_id")});
@@ -90,8 +90,8 @@ var WeeklyTimesheet = form_common.FormWidget.extend(form_common.ReinitializeWidg
     initialize_field: function() {
         form_common.ReinitializeWidgetMixin.initialize_field.call(this);
         this.on("change:sheets", this, this.initialize_content);
-        this.on("change:date_to", this, this.initialize_content);
-        this.on("change:date_from", this, this.initialize_content);
+        this.on("change:date_end", this, this.initialize_content);
+        this.on("change:date_start", this, this.initialize_content);
         this.on("change:user_id", this, this.initialize_content);
     },
     initialize_content: function() {
@@ -99,8 +99,8 @@ var WeeklyTimesheet = form_common.FormWidget.extend(form_common.ReinitializeWidg
             return;
         }
 
-        // don't render anything until we have date_to and date_from
-        if (!this.get("date_to") || !this.get("date_from")) {
+        // don't render anything until we have date_end and date_start
+        if (!this.get("date_end") || !this.get("date_start")) {
             return;
         }
 
@@ -117,8 +117,8 @@ var WeeklyTimesheet = form_common.FormWidget.extend(form_common.ReinitializeWidg
             default_get = result;
             // calculating dates
             dates = [];
-            var start = self.get("date_from");
-            var end = self.get("date_to");
+            var start = self.get("date_start");
+            var end = self.get("date_end");
             while (start <= end) {
                 dates.push(start);
                 var m_start = moment(start).add(1, 'days');
@@ -143,7 +143,7 @@ var WeeklyTimesheet = form_common.FormWidget.extend(form_common.ReinitializeWidg
                 project_id = (project_id === "false")? false : Number(project_id);
                 var index = _.groupBy(lines, "date");
                 var days = _.map(dates, function(date) {
-                    var day = {day: date, lines: index[time.date_to_str(date)] || []};
+                    var day = {day: date, lines: index[time.date_end_str(date)] || []};
                     // add line where we will insert/remove hours
                     var to_add = _.find(day.lines, function(line) { return line.name === self.description_line; });
                     if (to_add) {
@@ -153,7 +153,7 @@ var WeeklyTimesheet = form_common.FormWidget.extend(form_common.ReinitializeWidg
                         day.lines.unshift(_.extend(_.clone(projects_defaults), {
                             name: self.description_line,
                             unit_amount: 0,
-                            date: time.date_to_str(date),
+                            date: time.date_end_str(date),
                             project_id: project_id,
                         }));
                     }
@@ -277,7 +277,7 @@ var WeeklyTimesheet = form_common.FormWidget.extend(form_common.ReinitializeWidg
             ops.push(_.extend({}, self.default_get, {
                 name: self.description_line,
                 unit_amount: 0,
-                date: time.date_to_str(self.dates[0]),
+                date: time.date_end_str(self.dates[0]),
                 project_id: id,
             }));
 

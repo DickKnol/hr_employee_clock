@@ -50,7 +50,7 @@ class HrTimesheetSheetSheetAccount(models.Model):
     # still seing _depends in BaseModel, ok to leave this as is?
     _depends = {
         'account.analytic.line': ['account_id', 'date', 'unit_amount', 'user_id'],
-        'hr_timesheet_sheet.sheet': ['date_from', 'date_to', 'user_id'],
+        'hr_timesheet_sheet.sheet': ['date_start', 'date_end', 'user_id'],
     }
 
     @api.model_cr
@@ -65,8 +65,8 @@ class HrTimesheetSheetSheetAccount(models.Model):
             from
                 account_analytic_line l
                     LEFT JOIN hr_timesheet_sheet_sheet s
-                        ON (s.date_to >= l.date
-                            AND s.date_from <= l.date
+                        ON (s.date_end >= l.date
+                            AND s.date_start <= l.date
                             AND s.user_id = l.user_id)
             group by l.account_id, s.id
         )""")
