@@ -159,7 +159,7 @@ class HrTimesheetSheet(models.Model):
                           readonly=True,
                           states={'new': [('readonly', False)]})
     timesheet_ids = fields.One2many('account.analytic.line',
-                                    'sheet_id',
+                                    'att_sheet_id',
                                     string='Timesheet lines',
                                     readonly=True,
                                     states={

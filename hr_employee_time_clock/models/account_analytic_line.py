@@ -34,7 +34,7 @@ class AccountAnalyticLine(models.Model):
                                         index=True,
                                         ondelete='cascade',
                                         search='_search_sheet')
-    sheet_id = fields.Many2one('hr_timesheet_sheet.sheet',
+    att_sheet_id = fields.Many2one('hr_timesheet_sheet.sheet',
                                compute='_compute_sheet',
                                string='Sheet',
                                store=True)
@@ -64,7 +64,7 @@ class AccountAnalyticLine(models.Model):
                 # [0] because only one sheet possible for an
                 # employee between 2 dates
                 ts_line.sheet_id_computed = sheets[0]
-                ts_line.sheet_id = sheets[0]
+                ts_line.att_sheet_id = sheets[0]
 
     def _search_sheet(self, operator, value):
         assert operator == 'in'
@@ -94,7 +94,7 @@ class AccountAnalyticLine(models.Model):
 
     def _check_state(self):
         for line in self:
-            if line.sheet_id and line.sheet_id.state not in ('draft', 'new'):
+            if line.att_sheet_id and line.att_sheet_id.state not in ('draft', 'new'):
                 raise UserError(_(
                     'You cannot modify an entry in a confirmed timesheet.'))
         return True

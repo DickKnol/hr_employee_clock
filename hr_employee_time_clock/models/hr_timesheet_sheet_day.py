@@ -80,7 +80,7 @@ class TimesheetsByPeriod(models.Model):
                                 0.0 as total_attendance
                             from
                                 account_analytic_line l
-                                LEFT JOIN hr_timesheet_sheet_sheet s ON s.id = l.sheet_id
+                                LEFT JOIN hr_timesheet_sheet_sheet s ON s.id = l.att_sheet_id
                                 JOIN hr_employee e ON s.employee_id = e.id
                                 JOIN resource_resource r ON e.resource_id = r.id
                                 LEFT JOIN res_users u ON r.user_id = u.id
